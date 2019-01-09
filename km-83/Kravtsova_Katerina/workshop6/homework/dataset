@@ -1,0 +1,132 @@
+import plotly
+import plotly.graph_objs as go
+
+dataset = dict()
+
+try:
+    current_line=0
+    with open("../data/aac_intakes.csv", mode='r', encoding="utf-8") as file:
+
+        header = file.readline().rstrip()
+        header_nice = [ column.strip().upper() for column in header.split(",") ]
+
+        pet_loc = dict()
+        pet_breed = dict()
+        pet_color = dict()
+
+        cnt=0
+        for line in file:
+            cnt+=1
+            if cnt>20:
+                break
+
+
+            columns = line.split(",")
+            #print(columns)
+
+            id = columns[1]
+            type = columns[2]
+            breed = columns[3]
+            color = columns[4]
+            date = columns[5]
+            location = columns[7]
+            #print(id, location)
+
+
+            #main dictionary
+            if location not in dataset:
+                dataset[location] = dict()
+            if date not in dataset[location]:
+                dataset[location][date] = dict()
+            if id not in dataset[location][date]:
+                dataset[location][date][id] = dict()
+            if breed not in dataset[location][date][id]:
+                dataset[location][date][id][breed] = dict()
+
+            dataset[location][date][id][breed] = color
+
+
+
+
+            #for first graph: location-pets quantity
+            if location not in pet_loc:
+                pet_loc[location] = dict()
+            if id not in pet_loc[location]:
+                pet_loc[location][id]=color
+
+            #for second diagram: breed - pets quantity
+            if breed not in pet_breed:
+                pet_breed[breed] = set()
+            pet_breed[breed].add(id)
+
+            #for trird bar: color - pets quantity
+            if color not in pet_color:
+                pet_color[color] = set()
+            pet_color[color].add(id)
+
+        #print(dataset)
+        #print(pet_loc)
+        #print(pet_breed)
+
+        quant=[]
+        for location in pet_loc:
+            number=len(pet_loc[location].values())
+            quant.append(number)
+
+
+
+        #graph = go.Scatter(x=list(pet_loc.keys()), y=quant, name='pets_location')
+
+        #plotly.offline.plot([graph], filename='pets_loc.html')
+
+        values=[]
+
+        for breed in pet_breed:
+            number=len(breed)
+            values.append(number)
+        #print(values)
+        print(pet_breed.keys())
+        #pie=go.Pie(labels=list(pet_breed.keys()), values=values, name='pets_breed')
+        #plotly.offline.plot([pie], filename='pets_breed.html')
+
+        quantity=[]
+        for color in pet_color:
+            number=len(color)
+            quantity.append(number)
+        #bar=go.Bar(x=list(pet_color.keys()), y=quantity, name='pets_color')
+        #plotly.offline.plot([bar], filename='pets_color.html')
+
+        figure = {"data": [
+            {
+                "x": list(pet_loc.keys()),
+                "y": quant,
+                "type": "scatter",
+                "name": "pets_location",
+            },
+            {
+                "x": list(pet_color.keys()),
+                "y": quantity,
+                "type": "bar",
+                "name": "pets_color",
+                "xaxis": "x2",
+                "yaxis": "y2"
+            },
+            {
+                "labels": list(pet_breed.keys()),
+                "values": values,
+                "type": "pie",
+                "name": "pets_color",
+                "textinfo": "none",
+                'domain': {'x': [0, 0.45], 'y': [0.55, 1]},
+            }
+        ], "layout": go.Layout(
+            xaxis=dict(domain=[0, 0.45]), yaxis=dict(domain=[0, 0.45]),
+            xaxis2=dict(domain=[0.55, 1]), yaxis2=dict(domain=[0, 0.45], anchor='x2'))
+        plotly.offline.plot(figure, filename='pets.html')
+
+
+
+except IOError as io_error:
+    print("Error with file", io_error.errno, io_error.strerror)
+except ValueError as v_error:
+    print("Error in line", current_line, v_error)
